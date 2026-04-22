@@ -1,0 +1,50 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ main ] # जेव्हा तू 'main' ब्रांचवर कोड टाकलास की हे सुरू होईल
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Install Dependencies
+        run: |
+          npm install
+          npm install @capacitor/core @capacitor/cli @capacitor/android
+
+      - name: Build Web Assets
+        run: |
+          # इथे तुझा वेब कोड 'www' किंवा 'dist' फोल्डरमध्ये असायला हवा
+          mkdir -p www
+          cp index.html www/ 2>/dev/null || true
+          cp -r assets www/ 2>/dev/null || true
+
+      - name: Capacitor Sync
+        run: |
+          npx cap init "MayureshGarments" "com.mayuresh.app" --web-dir www
+          npx cap add android
+          npx cap sync android
+
+      - name: Build Android APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v3
+        with:
+          name: Mayuresh-Garments-APK
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          
